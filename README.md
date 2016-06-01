@@ -1,0 +1,1 @@
+A chrome extension to count the number of lines of code in a github repository
