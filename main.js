@@ -1,4 +1,4 @@
-(function(){
+var GithubLOCmain = function(){
 	var valid_file_extensions = ["js", "cpp", "cc", "py", "php", "c", "java", "html", "xml", "json",
 		"swift", "bash", "sh", "pl", "rb", "cs", "m", "h", "hpp", "aspx", "asp", "lua", "prl", "dart"];
 
@@ -28,8 +28,8 @@
 	function getLocFromUrl(url, file_ext) {
 		function callback(data) {
 			var loc = data.match(/\d+ lines/g);
-			if (loc.length == 0) {
-				console.log("Fuck");
+			if (!loc || loc.length == 0) {
+				console.log("File " + url + " too big to display lines of code");
 				return;
 			}
 			var loc = Number(loc[0].replace("lines", ""));
@@ -75,4 +75,35 @@
 			getLocFromUrl(url, file_ext);
 		}
 	}
-})();
+};
+
+GithubLOCmain();
+
+// Executed when the page history changes (i.e: user clicks on a link).
+// Repeatedly checks the page's progress bar to see if the page is fully loaded
+// before executing the counting function
+var GithubLOCHistoryChangeCallback = function() {
+	var interval = setInterval(function() {
+		var p = document.getElementsByClassName("progress");
+		if (p && p.length) p = p[0];
+		if (p.style.width.indexOf("100%") != -1) {
+			clearInterval(interval);
+			GithubLOCmain();
+		}
+	}, 300);
+}
+
+window.history.onpushstate = GithubLOCHistoryChangeCallback;
+window.onpopstate = GithubLOCHistoryChangeCallback;
+
+// a little bit of nonsense to create an onpushstate event
+(function(history){
+  var pushState = history.pushState;
+  history.pushState = function(state) {
+        var ret = pushState.apply(history, arguments);
+        if (typeof history.onpushstate == "function") {
+          	history.onpushstate({state: state});
+        }
+        return ret;
+  }
+})(window.history);
