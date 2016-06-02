@@ -1,6 +1,8 @@
 var GithubLOCmain = function(){
 	var valid_file_extensions = ["js", "cpp", "cc", "py", "php", "c", "java", "html", "xml", "json",
-		"swift", "bash", "sh", "pl", "rb", "cs", "m", "h", "hpp", "aspx", "asp", "lua", "prl", "dart"];
+		"swift", "bash", "sh", "pl", "rb", "cs", "m", "h", "hpp", "aspx", "asp", "lua", "prl", "dart",
+		"pxd", "pyx", "yml", "yaml", "gitignore", "md", "mk", "bat", "scala", "win", "r", "css", "sql",
+		"vb", "s", "asm", "d", "pas", "dpr", "as", "cfc", "hs", "clj", "cbl", "el", "lisp", "f90"];
 
 	function addOrCreate(dict_in, key_in, value_in) {
 		if (key_in in dict_in) {
