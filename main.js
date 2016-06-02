@@ -36,7 +36,7 @@ var GithubLOCmain = function(){
 			console.log(link.href + " " + String(loc));
 			addOrCreate(ext_to_count_map, file_ext, loc);
 			drawLocData();
-			link.innerHTML = link.title + "  (" + loc + ")";
+			link.innerHTML = link.title + "  <span style='color: #888'>| " + loc + " lines</span>";
 		}
 		httpGetAsync(link.href, callback);
 	}
