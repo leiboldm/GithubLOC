@@ -25,7 +25,7 @@ var GithubLOCmain = function(){
 	    xmlHttp.send(null);
 	}
 
-	function getLocFromUrl(url, file_ext) {
+	function getLocFromLink(link, file_ext) {
 		function callback(data) {
 			var loc = data.match(/\d+ lines/g);
 			if (!loc || loc.length == 0) {
@@ -33,11 +33,12 @@ var GithubLOCmain = function(){
 				return;
 			}
 			var loc = Number(loc[0].replace("lines", ""));
-			console.log(url + " " + String(loc));
+			console.log(link.href + " " + String(loc));
 			addOrCreate(ext_to_count_map, file_ext, loc);
 			drawLocData();
+			link.innerHTML = link.title + "  (" + loc + ")";
 		}
-		httpGetAsync(url, callback);
+		httpGetAsync(link.href, callback);
 	}
 
 	function stringifyDict(dict) {
@@ -58,9 +59,7 @@ var GithubLOCmain = function(){
 			locDisplay.id = display_id;
 			commit_tease.appendChild(locDisplay);
 		}
-
 		locDisplay.innerHTML = "Lines of code: " + stringifyDict(ext_to_count_map);
-
 	}
 
 	var file_links = document.getElementsByClassName("js-navigation-open");
@@ -71,8 +70,7 @@ var GithubLOCmain = function(){
 		var file_ext = title.split(".");
 		file_ext = file_ext[file_ext.length - 1];
 		if (valid_file_extensions.indexOf(file_ext) != -1) {
-			var url = link.href;
-			getLocFromUrl(url, file_ext);
+			getLocFromLink(link, file_ext);
 		}
 	}
 };
