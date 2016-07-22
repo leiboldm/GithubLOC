@@ -14,6 +14,7 @@ var GithubLOCmain = function(){
 
 	// mapping from file extension to lines of code
 	var ext_to_count_map = {};
+	var link_to_file_map = {};
 
 	function httpGetAsync(theUrl, callback)
 	{
@@ -40,6 +41,7 @@ var GithubLOCmain = function(){
 			drawLocData();
 			// idk why, but this appears to work better than just just setting link.innerHTML
 			document.getElementById(link.id).innerHTML = link.title + " <span style='color:#888'>| " + loc + " lines</span>";
+			link_to_file_map[link.href] = data;
 		}
 		httpGetAsync(link.href, callback);
 	}
@@ -51,6 +53,56 @@ var GithubLOCmain = function(){
 			str_arr.sort();
 		}
 		return str_arr.join(",  ");
+	}
+
+	var links = document.getElementsByClassName("js-navigation-open");
+	Array.prototype.forEach.call(links,
+		function(link) {
+			link.addEventListener("mouseout", function(e) {
+				console.log("removing hover");
+				document.getElementById(link.href).remove();
+			});
+			link.addEventListener("mousemove", function(e) {
+				var elt = document.getElementById(link.href);
+				console.log(elt);
+				if (elt) {
+					position_hover(e, elt);
+				} else {
+					create_hover(e, link.href);
+				}
+			})
+		}
+	);
+
+	function position_hover(e, elt) {
+		console.log(e.clientX, e.clientY);
+		console.log(elt);
+		elt.style.left = (10 + e.clientX).toString() + "px";
+		elt.style.top = (5 + e.clientY).toString() + "px";
+	}
+
+	function create_hover(e, url) {
+		console.log("creating hover");
+		var hover_view = document.createElement("div");
+		hover_view.id = url;
+		hover_view.innerHTML = 
+			"<div style='background: white; border:1px solid black; border-radius: 5px'>"
+			+ get_code(link_to_file_map[url]) + "</div>";
+		hover_view.style.position = "fixed";
+		position_hover(e, hover_view);
+		document.body.append(hover_view);
+	}
+
+	function get_code(htmlStr) {
+		var temp_div = document.createElement("div");
+		temp_div.style.display = "none";
+		temp_div.innerHTML = htmlStr;
+		document.body.append(temp_div);
+		var file = document.getElementsByClassName("file");
+		file = file[0];
+		var code = file.outerHTML;
+		temp_div.remove();
+		return code;
 	}
 
 	var display_id = "GithubLOC-loc-display";
