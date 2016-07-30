@@ -56,42 +56,12 @@ var GithubLOCmain = function(){
 	}
 
 	var links = document.getElementsByClassName("js-navigation-open");
+	var hoverifiedLinks = [];
 	Array.prototype.forEach.call(links,
 		function(link) {
-			link.addEventListener("mouseout", function(e) {
-				console.log("removing hover");
-				document.getElementById(link.href).remove();
-			});
-			link.addEventListener("mousemove", function(e) {
-				var elt = document.getElementById(link.href);
-				console.log(elt);
-				if (elt) {
-					position_hover(e, elt);
-				} else {
-					create_hover(e, link.href);
-				}
-			})
+			hoverifiedLinks.push(new Link(link));
 		}
 	);
-
-	function position_hover(e, elt) {
-		console.log(e.clientX, e.clientY);
-		console.log(elt);
-		elt.style.left = (10 + e.clientX).toString() + "px";
-		elt.style.top = (5 + e.clientY).toString() + "px";
-	}
-
-	function create_hover(e, url) {
-		console.log("creating hover");
-		var hover_view = document.createElement("div");
-		hover_view.id = url;
-		hover_view.innerHTML = 
-			"<div style='background: white; border:1px solid black; border-radius: 5px'>"
-			+ get_code(link_to_file_map[url]) + "</div>";
-		hover_view.style.position = "fixed";
-		position_hover(e, hover_view);
-		document.body.append(hover_view);
-	}
 
 	function get_code(htmlStr) {
 		var temp_div = document.createElement("div");
@@ -126,6 +96,87 @@ var GithubLOCmain = function(){
 		file_ext = file_ext[file_ext.length - 1];
 		if (valid_file_extensions.indexOf(file_ext) != -1) {
 			getLocFromLink(link, file_ext);
+		}
+	}
+
+	function create_hover(e, link) {
+		var hover_view = document.createElement("div");
+		hover_view.id = link.href;
+		hover_view.innerHTML = 
+			"<div style='background: white; border:1px solid black; border-radius: 5px'>"
+			+ get_code(link_to_file_map[link.href]) + "</div>";
+		hover_view.style.position = "fixed";
+		hover_view.style.overflow = "scroll";
+		hover_view.style.zIndex = 1000000;
+		link.append(hover_view);
+		position_hover(e, hover_view);
+		return hover_view;
+	}
+
+	function position_hover(e, elt) {
+		var eltHeight = elt.clientHeight;
+		var screenHeight = window.screen.height;
+		var top = 0;
+		if (eltHeight < screenHeight) {
+			if (e.clientY - (eltHeight / 2) > 0) {
+				top = e.clientY - eltHeight / 2;
+			}
+		} else {
+			elt.style.height = screenHeight.toString() + "px";
+		}
+		var rect = elt.parentElement.getBoundingClientRect();
+		var left = rect.left + rect.width;
+		elt.style.left = left.toString() + "px";
+		elt.style.top = top.toString() + "px";
+	}
+
+	function Link(link) {
+		this.elt = link;
+		this.hoverElt = null; // set to div on creation
+		this.hovered = false;
+		this.hoverHovered = false;
+		this.scrollY = 0;
+		var that = this;
+
+		window.addEventListener("scroll", function(e) {
+			if (that.hoverElt) {
+				var curr_top = Number(that.hoverElt.style.top.replace("px", ""));
+				var new_top = curr_top - (window.scrollY - that.scrollY);
+				that.scrollY = window.scrollY;
+				that.hoverElt.style.top = new_top.toString() + "px";
+			}
+		});
+
+		this.elt.addEventListener("mousemove", function(e) {
+			that.hovered = true;
+			if (!that.hoverElt) {
+				that.createHoverElt(e);
+				that.scrollY = window.scrollY;
+			}
+		});
+		this.elt.addEventListener("mouseout", function(e) {
+			that.hovered = false;
+			that.removeHoverElt();
+		});
+
+		this.createHoverElt = function(mouseEvent) {
+			this.hoverElt = create_hover(mouseEvent, this.elt);
+			this.hoverElt.addEventListener("mousemove", function(e) {
+				that.hoverHovered = true;
+			});
+			this.hoverElt.addEventListener("mouseout", function(e) {
+				that.hoverHovered = false;
+				that.removeHoverElt();
+			});
+		}
+
+		this.removeHoverElt = function() {
+			setTimeout(function() {
+				if (!that.hovered && !that.hoverHovered && that.hoverElt) {
+					that.hoverElt.remove();
+					that.hoverElt = null;
+				}
+			}, 100);
 		}
 	}
 };
