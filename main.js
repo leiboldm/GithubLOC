@@ -106,12 +106,19 @@ var GithubLOCmain = function(){
 		hover_view.id = link.href;
 		var link_data = get_code(link_to_file_map[link.href]);
 		hover_view.innerHTML = 
-			"<div style='background: white; border:1px solid black; border-radius: 5px'>"
+			"<div style='background: white; border:1px solid black; border-radius: 5px;'>"
 			+ link_data + "</div>";
 		hover_view.style.position = "fixed";
 		hover_view.style.overflow = "scroll";
 		hover_view.style.zIndex = 1000000;
-		link.append(hover_view);
+		hover_view.querySelectorAll("td").forEach(function(elt) {
+			elt.style.paddingTop = "0px";
+			elt.style.paddingBottom = "0px";
+			elt.style.lineHeight = "14px";
+			elt.style.border = "0px";
+		});
+		hover_view.querySelector(".file").style.margin = "0px";
+		link.appendChild(hover_view);
 		position_hover(e, hover_view);
 		return hover_view;
 	}
