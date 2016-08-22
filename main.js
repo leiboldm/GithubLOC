@@ -63,13 +63,15 @@ var GithubLOCmain = function(){
 		}
 	);
 
+	// parses only the code file out of [htmlStr] by writing it into shadow DOM
+	// and querying for the element with the class "file"
 	function get_code(htmlStr) {
 		var temp_div = document.createElement("div");
 		temp_div.style.display = "none";
-		temp_div.innerHTML = htmlStr;
-		document.body.append(temp_div);
-		var file = document.getElementsByClassName("file");
-		file = file[0];
+		var shadow = temp_div.createShadowRoot();
+		shadow.innerHTML = htmlStr;
+		var file = shadow.querySelector(".file");
+		console.log(file);
 		var code = file.outerHTML;
 		temp_div.remove();
 		return code;
@@ -102,9 +104,10 @@ var GithubLOCmain = function(){
 	function create_hover(e, link) {
 		var hover_view = document.createElement("div");
 		hover_view.id = link.href;
+		var link_data = get_code(link_to_file_map[link.href]);
 		hover_view.innerHTML = 
 			"<div style='background: white; border:1px solid black; border-radius: 5px'>"
-			+ get_code(link_to_file_map[link.href]) + "</div>";
+			+ link_data + "</div>";
 		hover_view.style.position = "fixed";
 		hover_view.style.overflow = "scroll";
 		hover_view.style.zIndex = 1000000;
@@ -115,14 +118,14 @@ var GithubLOCmain = function(){
 
 	function position_hover(e, elt) {
 		var eltHeight = elt.clientHeight;
-		var screenHeight = window.screen.height;
+		var windowHeight = window.innerHeight;
 		var top = 0;
-		if (eltHeight < screenHeight) {
+		if (eltHeight < windowHeight) {
 			if (e.clientY - (eltHeight / 2) > 0) {
 				top = e.clientY - eltHeight / 2;
 			}
 		} else {
-			elt.style.height = screenHeight.toString() + "px";
+			elt.style.height = windowHeight.toString() + "px";
 		}
 		var rect = elt.parentElement.getBoundingClientRect();
 		var left = rect.left + rect.width;
@@ -130,51 +133,55 @@ var GithubLOCmain = function(){
 		elt.style.top = top.toString() + "px";
 	}
 
+	// class
 	function Link(link) {
-		this.elt = link;
-		this.hoverElt = null; // set to div on creation
-		this.hovered = false;
-		this.hoverHovered = false;
-		this.scrollY = 0;
+		var elt = link;
+		var hoverElt = null; // set to div on creation
+		var hovered = false;
+		var hoverHovered = false;
+		var scrollY = 0;
 		var that = this;
 
 		window.addEventListener("scroll", function(e) {
-			if (that.hoverElt) {
-				var curr_top = Number(that.hoverElt.style.top.replace("px", ""));
+			if (hoverElt) {
+				var curr_top = Number(hoverElt.style.top.replace("px", ""));
 				var new_top = curr_top - (window.scrollY - that.scrollY);
-				that.scrollY = window.scrollY;
-				that.hoverElt.style.top = new_top.toString() + "px";
+				scrollY = window.scrollY;
+				hoverElt.style.top = new_top.toString() + "px";
 			}
 		});
 
-		this.elt.addEventListener("mousemove", function(e) {
-			that.hovered = true;
-			if (!that.hoverElt) {
-				that.createHoverElt(e);
-				that.scrollY = window.scrollY;
+		elt.addEventListener("mousemove", function(e) {
+			hovered = true;
+			if (!hoverElt) {
+				createHoverElt(e);
+				scrollY = window.scrollY;
 			}
 		});
-		this.elt.addEventListener("mouseout", function(e) {
-			that.hovered = false;
-			that.removeHoverElt();
+		elt.addEventListener("mouseout", function(e) {
+			console.log("mouseout " + elt.href);
+			hovered = false;
+			removeHoverElt();
 		});
 
-		this.createHoverElt = function(mouseEvent) {
-			this.hoverElt = create_hover(mouseEvent, this.elt);
-			this.hoverElt.addEventListener("mousemove", function(e) {
-				that.hoverHovered = true;
+		var createHoverElt = function(mouseEvent) {
+			console.log("createHover " + elt.href);
+			hoverElt = create_hover(mouseEvent, elt);
+			hoverElt.addEventListener("mousemove", function(e) {
+				hoverHovered = true;
 			});
-			this.hoverElt.addEventListener("mouseout", function(e) {
-				that.hoverHovered = false;
-				that.removeHoverElt();
+			hoverElt.addEventListener("mouseout", function(e) {
+				hoverHovered = false;
+				removeHoverElt();
 			});
+			console.log(hoverElt);
 		}
 
-		this.removeHoverElt = function() {
+		var removeHoverElt = function() {
 			setTimeout(function() {
-				if (!that.hovered && !that.hoverHovered && that.hoverElt) {
-					that.hoverElt.remove();
-					that.hoverElt = null;
+				if (!hovered && !hoverHovered && hoverElt) {
+					hoverElt.remove();
+					hoverElt = null;
 				}
 			}, 100);
 		}
